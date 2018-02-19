@@ -16,6 +16,7 @@
   "author": "Mike van Rossum <mike@mvr.me>",
   "dependencies": {
     "@slack/client": "^3.10.0",
+    "api-bitcoin-trade": "^0.2.0",
     "async": "2.1.2",
     "binance": "^1.1.0",
     "bitcoin-co-id": "0.0.1",
