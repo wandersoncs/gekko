@@ -8,7 +8,7 @@ var Trader = function (config) {
   _.bindAll(this);
   if (_.isObject(config)) {
     this.apiKey = config.key;
-  }
+	}
   this.name = 'BitcoinTrade';
   this.BitcoinTrade = new BitcoinTrade(this.apikey);
 }
@@ -45,10 +45,10 @@ Trader.prototype.getPortfolio = function (callback) {
     data.forEach(wallet => {
       portfolio.push({
         name: wallet.currency_code,
-        amount: wallet.available_amount
+        amount: +wallet.available_amount
       });
     });
-    callback(false, portfolio);
+    callback(undefined, portfolio);
   }).catch(err => {
     callback(err);
   });
@@ -56,24 +56,24 @@ Trader.prototype.getPortfolio = function (callback) {
 
 // implemented: not tested
 Trader.prototype.getTicker = function (callback) {
+  let process = (err, data) => {
+    if (err) return callback(err);
+    callback(undefined, data)
+  };
   this.BitcoinTrade.getTicketSummary().then(data => {
     let ticket = {
-      ask: data.ticket.sell,
-      bid: data.ticket.buy,
-      last: data.ticket.last,
-      high: data.ticket.high,
-      low: data.ticket.low
+      ask: +data.ticket.sell,
+      bid: +data.ticket.buy
     };
     log.info('getTicker', ticket);
-    callback(false, ticket);
+    process(undefined, ticket);
   }).catch(err => {
-    callback(err);
+    process(err);
   });
 }
 
 // implemented: not tested
 Trader.prototype.getFee = function (callback) {
-  log.debug('getFee');
   callback(false, 0.25 / 100);
 }
 
@@ -216,18 +216,25 @@ Trader.prototype.cancelOrder = function (order, callback) {
   });
 }
 
+	function hashCode(s) {
+	var h = 0, l = s.length, i = 0;
+	if (l > 0)
+		while (i < l)
+			h = (h << 5) - h + s.charCodeAt(i++) | 0;
+	return h;
+};
+
 // implemented: not tested
 Trader.prototype.getTrades = function (since, callback, descending) {
   var args = _.toArray(arguments);
   var process = function (err, trades) {
-    log.debug('getTrades', err, trades);
     if (err)
       return this.retry(this.getTrades, args);
 
     var result = _.map(trades, t => {
       return {
         date: moment(t.date).unix(),
-        tid: +t.active_order_code,
+				tid: +hashCode(t.active_order_code),
         price: +t.unit_price,
         amount: +t.amount
       }
